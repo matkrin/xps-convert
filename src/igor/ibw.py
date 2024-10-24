@@ -202,8 +202,8 @@ class WaveHeaderV5:
     whpad2: int
     data_folder: int
     n_dim: tuple[int, int, int, int]
-    sf_a: tuple[int, int, int, int]
-    sf_b: tuple[int, int, int, int]
+    sf_a: tuple[float, float, float, float]
+    sf_b: tuple[float, float, float, float]
     data_units: str
     dim_units: tuple[
         tuple[int, int, int, int],
