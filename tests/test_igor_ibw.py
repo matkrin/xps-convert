@@ -5,10 +5,9 @@ import igor
 testdata = Path(__file__).parent / "testdata"
 
 IBW_MATRIX = testdata / "test_matrix.ibw"
-# IBW_MATRIX = "/Users/matthias/github/spm-rs/tests/test_files/test_matrix.ibw"
 
 def test_ibw():
-    ibw = igor.ibw.Ibw(str(IBW_MATRIX))
+    ibw = igor.Ibw(str(IBW_MATRIX))
     assert ibw.npnts == 16
     assert ibw.bname  == "test_matrix"
     assert ibw.n_dim ==  (4, 4, 0, 0)

@@ -190,11 +190,11 @@ class UserDependentVarRec:
 
 class PackedFile:
     def __init__(self, filepath: str):
+        self.records: list[igor.ibw.BinaryWave] = []
         with open(filepath, "rb") as f:
             file_size = os.path.getsize(filepath)
             cursor = Cursor(f)
 
-            records: list[igor.ibw.BinaryWave] = []
             while cursor.position() < file_size:
                 file_record_header = PackedFileRecordHeader.from_buffer(cursor)
                 print(f"{file_record_header=}")
@@ -238,13 +238,13 @@ class PackedFile:
                     case PackedFileRecordType.kWaveRecord:
                         position = cursor.position()
                         wave_record = igor.ibw.read_binary_wave(cursor)
-                        records.append(wave_record)
+                        self.records.append(wave_record)
                         cursor.set_position(position + file_record_header.num_data_bytes)
 
                     case _:
                         cursor.set_position(cursor.position() + file_record_header.num_data_bytes)
 
-            print(len(records))
-            for record in records:
+            print(len(self.records))
+            for record in self.records:
                 print(record)
                 print("-" * 80)
