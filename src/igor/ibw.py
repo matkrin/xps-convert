@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Self
+from typing import Self, override
 
 from igor.cursor import Cursor
 
@@ -338,63 +338,34 @@ WaveHeader = WaveHeaderV2 | WaveHeaderV5
 
 
 class Ibw:
-    # creation_date:
     # mod_date:
-    npnts: int
     bname: str
+    creation_date: int
+    npnts: int
     n_dim: tuple[int, int, int, int]
     x_step: tuple[float, float, float, float]
     x_start: tuple[float, float, float, float]
     data_units: str
-    data: list[float]
     note: str
     extended_data_units: str | None
     dim_e_units: list[str] | None
     dim_labels: list[str] | None
+    data: list[float]
 
     def __init__(self, filepath: str):
         with open(filepath, "rb") as f:
             cursor = Cursor(f)
-            # file_len = len(f)
-            version = cursor.read_i16_le()
-            cursor.set_position(0)
-
-            bin_header = None
-            wave_header = None
-            match version:
-                case 2:
-                    bin_header = BinHeaderV2.from_buffer(cursor)
-                    wave_header = WaveHeaderV2.from_buffer(cursor)
-                case 5:
-                    bin_header = BinHeaderV5.from_buffer(cursor)
-                    wave_header = WaveHeaderV5.from_buffer(cursor)
-                case _:
-                    raise ValueError(
-                        "Not a version 2 or version 5 bin header or wave header"
-                    )
+            wave = read_binary_wave(cursor)
+            wave_header = wave.wave_header
 
             self.npnts = wave_header.npnts
-            type_ = wave_header.type_
-
-            # TODO reshape data maybe
-            self.data = self.read_numeric_data(cursor, type_, self.npnts)
-
-            # version 1, 2 and 3 have 16 bytes of padding after numeric wave data
-            if version in [1, 2, 3]:
-                pos = cursor.position()
-                cursor.set_position(pos + 16)
-
-            # Optional Data
-            # v1: no optional data
-            # v2: wave note data
-            # v3: wave note data, wave dependency formula
-            # v5: wave dependency formula, wave note data, extended data units data, extended dimension units data, dimension label data, String indices used for text waves only
-
-            self.note = self.read_note(cursor, bin_header.note_size)
-            self.extended_data_units = self.read_extended_data_units(cursor, bin_header)
-            self.dim_e_units = self.read_dim_e_units(cursor, bin_header)
-            self.dim_labels = self.read_dim_labels(cursor, bin_header)
+            self.data = wave.data
             self.bname = wave_header.bname
+            self.creation_date = wave_header.creation_date
+            self.note = wave.note
+            self.extended_data_units = wave.extended_data_units
+            self.dim_e_units = wave.dim_e_units
+            self.dim_labels = wave.dim_labels
 
             self.n_dim = (
                 wave_header.n_dim
@@ -413,119 +384,155 @@ class Ibw:
             )
             self.data_units = wave_header.data_units
 
-            # let bname = match &wave_header {
-            #     WaveHeader::V2(wh) => wh.bname.trim_matches(char::from(0)).to_string(),
-            #     WaveHeader::V5(wh) => wh.bname.trim_matches(char::from(0)).to_string(),
-            # };
-            # let n_dim = match &wave_header {
-            #     WaveHeader::V2(wh) => [wh.npnts, 0, 0, 0],
-            #     WaveHeader::V5(wh) => wh.n_dim,
-            # };
-            # let x_step = match &wave_header {
-            #     WaveHeader::V2(wh) => [wh.hs_a, 0_f64, 0_f64, 0_f64],
-            #     WaveHeader::V5(wh) => wh.sf_a,
-            # };
-            # let x_start = match &wave_header {
-            #     WaveHeader::V2(wh) => [wh.hs_b, 0_f64, 0_f64, 0_f64],
-            #     WaveHeader::V5(wh) => wh.sf_b,
-            # };
-            # let data_units = match &wave_header {
-            #     WaveHeader::V2(wh) => wh.data_units.trim_matches(char::from(0)).to_string(),
-            #     WaveHeader::V5(wh) => wh.data_units.trim_matches(char::from(0)).to_string(),
-            # };
+    @override
+    def __repr__(self) -> str:
+        attributes = "\n".join(
+            f"{k} = {v!r}" for k, v in self.__dict__.items() if not k.startswith("_")
+        )
+        return f"{self.__class__.__name__}({attributes}\n)"
 
-            # Ok(Ibw {
-            #     npnts,
-            #     bname,
-            #     n_dim,
-            #     x_step,
-            #     x_start,
-            #     data_units,
-            #     data,
-            #     note,
-            #     extended_data_units,
-            #     dim_e_units,
-            #     dim_labels,
-            # })
 
-    def read_numeric_data(
-        self, cursor: Cursor, data_type: int, num_data_points: int
-    ) -> list[float]:
-        data = None
-        match data_type:
-            case 0:
-                raise NotImplementedError("Text Wave")
-            case 1:
-                raise NotImplementedError("Complex")
-            case 2:
-                data = [cursor.read_f32_le() for _ in range(num_data_points)]
-            case 3:
-                raise NotImplementedError("Complex 64")
-            case 4:
-                data = [cursor.read_f64_le() for _ in range(num_data_points)]
-            case 5:
-                raise NotImplementedError("Complex 128")
-            case 8:
-                data = [cursor.read_i8_le() for _ in range(num_data_points)]
-            case 9:
-                raise NotImplementedError("Complex Int8")
-            case 0x10:
-                data = [cursor.read_i16_le() for _ in range(num_data_points)]
-            case 0x11:
-                raise NotImplementedError("Complex Int16")
-            case 0x20:
-                data = [cursor.read_i32_le() for _ in range(num_data_points)]
-            case 0x21:
-                raise NotImplementedError("Complex Int32")
-            case 0x48:
-                data = [cursor.read_u8_le() for _ in range(num_data_points)]
-            case 0x49:
-                raise NotImplementedError("Complex UInt8")
-            case 0x50:
-                data = [cursor.read_u16_le() for _ in range(num_data_points)]
-            case 0x51:
-                raise NotImplementedError("Complex UInt16 Data")
-            case 0x60:
-                data = [cursor.read_u32_le() for _ in range(num_data_points)]
-            case 0x61:
-                raise NotImplementedError("Complex UInt32 Data")
-            case _:
-                raise ValueError("Unknown data type")
+@dataclass
+class BinaryWave:
+    bin_header: BinHeader
+    wave_header: WaveHeader
+    note: str
+    extended_data_units: str
+    dim_e_units: list[str]
+    dim_labels: list[str]
+    data: list[float]
 
-        return [float(i) for i in data]
 
-    def read_note(self, cursor: Cursor, note_size: int) -> str:
-        note = ""
-        if note_size != 0:
-            note = cursor.read_string(note_size).replace("\r", "\n")
+def read_binary_wave(cursor: Cursor) -> BinaryWave:
+    # file_len = len(f)
+    current_pos = cursor.position()
+    version = cursor.read_i16_le()
+    cursor.set_position(current_pos)
 
-        return note
+    bin_header = None
+    wave_header = None
+    match version:
+        case 2:
+            bin_header = BinHeaderV2.from_buffer(cursor)
+            wave_header = WaveHeaderV2.from_buffer(cursor)
+        case 5:
+            bin_header = BinHeaderV5.from_buffer(cursor)
+            wave_header = WaveHeaderV5.from_buffer(cursor)
+        case _:
+            raise ValueError("Not a version 2 or version 5 bin header or wave header")
 
-    def read_extended_data_units(self, cursor: Cursor, bin_header: BinHeader) -> str:
-        match bin_header:
-            case BinHeaderV5(_) if bin_header.data_e_units_size != 0:
-                extended_data_units = cursor.read_string(bin_header.data_e_units_size)
-            case _:
-                extended_data_units = ""
+    # TODO reshape data maybe
+    data = read_numeric_data(cursor, wave_header.type_, wave_header.npnts)
 
-        return extended_data_units
+    # version 1, 2 and 3 have 16 bytes of padding after numeric wave data
+    if version in [1, 2, 3]:
+        pos = cursor.position()
+        cursor.set_position(pos + 16)
 
-    def read_dim_e_units(self, cursor: Cursor, bin_header: BinHeader) -> list[str]:
-        # In C code this is a fixed length array of size 4. Here, it will be of variable length
-        dim_e_units: list[str] = []
-        if isinstance(bin_header, BinHeaderV5):
-            for i in bin_header.dim_e_units_size:
-                if i != 0:
-                    dim_e_units.append(cursor.read_string(i))
+    # Optional Data
+    # v1: no optional data
+    # v2: wave note data
+    # v3: wave note data, wave dependency formula
+    # v5: wave dependency formula, wave note data, extended data units data, extended dimension units data, dimension label data, String indices used for text waves only
 
-        return dim_e_units
+    note = read_note(cursor, bin_header.note_size)
+    extended_data_units = read_extended_data_units(cursor, bin_header)
+    dim_e_units = read_dim_e_units(cursor, bin_header)
+    dim_labels = read_dim_labels(cursor, bin_header)
 
-    def read_dim_labels(self, cursor: Cursor, bin_header: BinHeader) -> list[str]:
-        # In C code this is a fixed length array of size 4. Here, it will be of variable length
-        dim_labels: list[str] = []
-        if isinstance(bin_header, BinHeaderV5):
-            for i in bin_header.dim_e_units_size:
-                if i != 0:
-                    dim_labels.append(cursor.read_string(i))
+    return BinaryWave(
+        bin_header,
+        wave_header,
+        note,
+        extended_data_units,
+        dim_e_units,
+        dim_labels,
+        data,
+    )
 
-        return dim_labels
+
+def read_note(cursor: Cursor, note_size: int) -> str:
+    note = ""
+    if note_size != 0:
+        note = cursor.read_string(note_size).replace("\r", "\n")
+
+    return note
+
+
+def read_extended_data_units(cursor: Cursor, bin_header: BinHeader) -> str:
+    match bin_header:
+        case BinHeaderV5(_) if bin_header.data_e_units_size != 0:
+            extended_data_units = cursor.read_string(bin_header.data_e_units_size)
+        case _:
+            extended_data_units = ""
+
+    return extended_data_units
+
+
+def read_dim_e_units(cursor: Cursor, bin_header: BinHeader) -> list[str]:
+    # In C code this is a fixed length array of size 4. Here, it will be of variable length
+    dim_e_units: list[str] = []
+    if isinstance(bin_header, BinHeaderV5):
+        for i in bin_header.dim_e_units_size:
+            if i != 0:
+                dim_e_units.append(cursor.read_string(i))
+
+    return dim_e_units
+
+
+def read_dim_labels(cursor: Cursor, bin_header: BinHeader) -> list[str]:
+    # In C code this is a fixed length array of size 4. Here, it will be of variable length
+    dim_labels: list[str] = []
+    if isinstance(bin_header, BinHeaderV5):
+        for i in bin_header.dim_e_units_size:
+            if i != 0:
+                dim_labels.append(cursor.read_string(i))
+
+    return dim_labels
+
+
+def read_numeric_data(
+    cursor: Cursor, data_type: int, num_data_points: int
+) -> list[float]:
+    data = None
+    match data_type:
+        case 0:
+            raise NotImplementedError("Text Wave")
+        case 1:
+            raise NotImplementedError("Complex")
+        case 2:
+            data = [cursor.read_f32_le() for _ in range(num_data_points)]
+        case 3:
+            raise NotImplementedError("Complex 64")
+        case 4:
+            data = [cursor.read_f64_le() for _ in range(num_data_points)]
+        case 5:
+            raise NotImplementedError("Complex 128")
+        case 8:
+            data = [cursor.read_i8_le() for _ in range(num_data_points)]
+        case 9:
+            raise NotImplementedError("Complex Int8")
+        case 0x10:
+            data = [cursor.read_i16_le() for _ in range(num_data_points)]
+        case 0x11:
+            raise NotImplementedError("Complex Int16")
+        case 0x20:
+            data = [cursor.read_i32_le() for _ in range(num_data_points)]
+        case 0x21:
+            raise NotImplementedError("Complex Int32")
+        case 0x48:
+            data = [cursor.read_u8_le() for _ in range(num_data_points)]
+        case 0x49:
+            raise NotImplementedError("Complex UInt8")
+        case 0x50:
+            data = [cursor.read_u16_le() for _ in range(num_data_points)]
+        case 0x51:
+            raise NotImplementedError("Complex UInt16 Data")
+        case 0x60:
+            data = [cursor.read_u32_le() for _ in range(num_data_points)]
+        case 0x61:
+            raise NotImplementedError("Complex UInt32 Data")
+        case _:
+            raise ValueError("Unknown data type")
+
+    return [float(i) for i in data]

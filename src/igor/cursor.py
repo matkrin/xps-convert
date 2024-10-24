@@ -53,9 +53,9 @@ class Cursor:
         Returns:
             The read string
         """
-        # return "".join([chr(i).rstrip("\x00") for i in self._buffer.read(str_len)])
-        bytes_ = self._buffer.read(str_len)
-        return bytes_.decode("utf-8").rstrip("\x00")
+        return "".join([chr(i).rstrip("\x00") for i in self._buffer.read(str_len)])
+        # bytes_ = self._buffer.read(str_len)
+        # return bytes_.decode("utf-8").rstrip("\x00")
 
     def read_u8_le(self) -> int:
         """Read a 8-bit unsigned integer
