@@ -18,5 +18,5 @@ def test_ibw():
     assert ibw.extended_data_units == "data_units"
     assert ibw.data[0:3] == [1.0, 5.0, 9.0]
     assert ibw.data[-3:] == [8.0, 12.0, 16.0]
-    assert ibw.dim_e_units == ["row_units", "col_units", "", ""]
-    assert ibw.dim_labels == ["", "", "", ""]
+    assert ibw.dim_e_units == ["row_units", "col_units"]
+    assert ibw.dim_labels == ["", ""]

@@ -53,20 +53,9 @@ class Cursor:
         Returns:
             The read string
         """
-        return "".join([chr(i).rstrip("\x00") for i in self._buffer.read(str_len)])
-        # bytes_ = self._buffer.read(str_len)
-        # return bytes_.decode("utf-8").rstrip("\x00")
-
-    def read_sm4_string(self) -> str:
-        """Read bytes as a UTF-16 encoded string. In SM4-files string data
-        always contains the length of the string as a u16 number, followed
-        by the string itself
-
-        Returns:
-            The read string
-        """
-        length = self.read_u16_le()
-        return self.read_string(length * 2).strip()
+        # return "".join([chr(i).rstrip("\x00") for i in self._buffer.read(str_len)])
+        bytes_ = self._buffer.read(str_len)
+        return bytes_.decode("utf-8").rstrip("\x00")
 
     def read_u8_le(self) -> int:
         """Read a 8-bit unsigned integer

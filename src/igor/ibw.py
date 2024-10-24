@@ -458,11 +458,11 @@ class Ibw:
             case 1:
                 raise NotImplementedError("Complex")
             case 2:
-                data = [cursor.read_f32_le() for _ in range(int(num_data_points / 4))]
+                data = [cursor.read_f32_le() for _ in range(num_data_points)]
             case 3:
                 raise NotImplementedError("Complex 64")
             case 4:
-                data = [cursor.read_f64_le() for _ in range(int(num_data_points / 8))]
+                data = [cursor.read_f64_le() for _ in range(num_data_points)]
             case 5:
                 raise NotImplementedError("Complex 128")
             case 8:
@@ -470,11 +470,11 @@ class Ibw:
             case 9:
                 raise NotImplementedError("Complex Int8")
             case 0x10:
-                data = [cursor.read_i16_le() for _ in range(int(num_data_points / 2))]
+                data = [cursor.read_i16_le() for _ in range(num_data_points)]
             case 0x11:
                 raise NotImplementedError("Complex Int16")
             case 0x20:
-                data = [cursor.read_i32_le() for _ in range(int(num_data_points / 4))]
+                data = [cursor.read_i32_le() for _ in range(num_data_points)]
             case 0x21:
                 raise NotImplementedError("Complex Int32")
             case 0x48:
@@ -482,11 +482,11 @@ class Ibw:
             case 0x49:
                 raise NotImplementedError("Complex UInt8")
             case 0x50:
-                data = [cursor.read_u16_le() for _ in range(int(num_data_points / 2))]
+                data = [cursor.read_u16_le() for _ in range(num_data_points)]
             case 0x51:
                 raise NotImplementedError("Complex UInt16 Data")
             case 0x60:
-                data = [cursor.read_u32_le() for _ in range(int(num_data_points / 4))]
+                data = [cursor.read_u32_le() for _ in range(num_data_points)]
             case 0x61:
                 raise NotImplementedError("Complex UInt32 Data")
             case _:
@@ -497,7 +497,7 @@ class Ibw:
     def read_note(self, cursor: Cursor, note_size: int) -> str:
         note = ""
         if note_size != 0:
-            note = cursor.read_string(note_size)#.replace("\r", "\n")
+            note = cursor.read_string(note_size).replace("\r", "\n")
 
         return note
 
@@ -511,6 +511,7 @@ class Ibw:
         return extended_data_units
 
     def read_dim_e_units(self, cursor: Cursor, bin_header: BinHeader) -> list[str]:
+        # In C code this is a fixed length array of size 4. Here, it will be of variable length
         dim_e_units: list[str] = []
         if isinstance(bin_header, BinHeaderV5):
             for i in bin_header.dim_e_units_size:
@@ -520,6 +521,7 @@ class Ibw:
         return dim_e_units
 
     def read_dim_labels(self, cursor: Cursor, bin_header: BinHeader) -> list[str]:
+        # In C code this is a fixed length array of size 4. Here, it will be of variable length
         dim_labels: list[str] = []
         if isinstance(bin_header, BinHeaderV5):
             for i in bin_header.dim_e_units_size:
