@@ -197,7 +197,7 @@ class PackedFile:
 
             while cursor.position() < file_size:
                 file_record_header = PackedFileRecordHeader.from_buffer(cursor)
-                print(f"{file_record_header=}")
+                # print(f"{file_record_header=}")
 
                 match PackedFileRecordType(file_record_header.record_type):
                     # case PackedFileRecordType.kVariablesRecord:
@@ -243,8 +243,3 @@ class PackedFile:
 
                     case _:
                         cursor.set_position(cursor.position() + file_record_header.num_data_bytes)
-
-            print(len(self.records))
-            for record in self.records:
-                print(record)
-                print("-" * 80)
