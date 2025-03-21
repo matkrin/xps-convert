@@ -6,18 +6,38 @@ from igor.cursor import Cursor
 
 @dataclass
 class BinHeaderV1:
-    version: int  # Version number for backwards compatibility.
-    wfm_size: int  # The size of the WaveHeader2 data classure plus the wave data plus 16 bytes of padding.
-    checksum: int  # Checksum over this header and the wave header.
+    """Version 1 file header.
+
+    Args:
+        version: Version number for backwards compatibility.
+        wfm_size: Size of the WaveHeader2 data classure plus the wave data
+            plus 16 bytes of padding.
+        checksum: Checksum over this header and the wave header.
+    """
+
+    version: int
+    wfm_size: int
+    checksum: int
 
 
 @dataclass
 class BinHeaderV2:
-    version: int  # Version number for backwards compatibility.
-    wfm_size: int  # The size of the WaveHeader2 data classure plus the wave data plus 16 bytes of padding.
-    note_size: int  # The size of the note text.
-    pict_size: int  # Reserved. Write zero. Ignore on read.
-    checksum: int  # Checksum over this header and the wave header.
+    """Version 2 file header.
+
+    Args:
+        version: Version number for backwards compatibility.
+        wfm_size: The size of the WaveHeader2 data classure
+            plus the wave data plus 16 bytes of padding.
+        note_size: The size of the note text.
+        pict_size: Reserved. Write zero. Ignore on read.
+        checksum: Checksum over this header and the wave header.
+    """
+
+    version: int
+    wfm_size: int
+    note_size: int
+    pict_size: int
+    checksum: int
 
     @classmethod
     def from_buffer(cls, cursor: Cursor) -> Self:
@@ -38,29 +58,55 @@ class BinHeaderV2:
 
 @dataclass
 class BinHeaderV3:
-    version: int  # Version number for backwards compatibility.
-    wfm_size: int  # The size of the WaveHeader2 data classure plus the wave data plus 16 bytes of padding.
-    note_size: int  # The size of the note text.
-    formula_size: int  # The size of the dependency formula, if any.
-    pict_size: int  # Reserved. Write zero. Ignore on read.
-    checksum: int  # Checksum over this header and the wave header.
+    """Version 3 file header.
+
+    Args:
+        version: Version number for backwards compatibility.
+        wfm_size: The size of the WaveHeader2 data classure plus the wave data
+            plus 16 bytes of padding.
+        note_size: The size of the note text.
+        formula_size: The size of the dependency formula, if any.
+        pict_size: Reserved. Write zero. Ignore on read.
+        checksum: Checksum over this header and the wave header.
+    """
+
+    version: int
+    wfm_size: int
+    note_size: int
+    formula_size: int
+    pict_size: int
+    checksum: int
 
 
 @dataclass
 class BinHeaderV5:
-    version: int  # Version number for backwards compatibility.
-    checksum: int  # Checksum over this header and the wave header.
-    wfm_size: int  # The size of the WaveHeader5 data classure plus the wave data.
-    formula_size: int  # The size of the dependency formula, if any.
-    note_size: int  # The size of the note text.
-    data_e_units_size: int  # The size of optional extended data units.
-    dim_e_units_size: tuple[
-        int, int, int, int
-    ]  # The size of optional extended dimension units.
-    dim_labels_size: tuple[int, int, int, int]  # The size of optional dimension labels.
-    s_indices_size: int  # The size of string indicies if this is a text wave.
-    options_size_1: int  # Reserved. Write zero. Ignore on read.
-    options_size_2: int  # Reserved. Write zero. Ignore on read.
+    """Version 5 file header.
+
+    Args:
+        version: Version number for backwards compatibility.
+        checksum: Checksum over this header and the wave header.
+        wfm_size: The size of the WaveHeader5 data classure plus the wave data.
+        formula_size: The size of the dependency formula, if any.
+        note_size: The size of the note text.
+        data_e_units_size: The size of optional extended data units.
+        dim_e_units_size: The size of optional extended dimension units.
+        dim_labels_size: nt, int, int, int]  # The size of optional dimension labels.
+        s_indices_size: The size of string indicies if this is a text wave.
+        options_size_1: Reserved. Write zero. Ignore on read.
+        options_size_2: Reserved. Write zero. Ignore on read.
+    """
+
+    version: int
+    checksum: int
+    wfm_size: int
+    formula_size: int
+    note_size: int
+    data_e_units_size: int
+    dim_e_units_size: tuple[int, int, int, int]
+    dim_labels_size: tuple[int, int, int, int]
+    s_indices_size: int
+    options_size_1: int
+    options_size_2: int
 
     @classmethod
     def from_buffer(cls, cursor: Cursor) -> Self:
@@ -98,30 +144,61 @@ BinHeader = BinHeaderV1 | BinHeaderV2 | BinHeaderV3 | BinHeaderV5
 
 @dataclass
 class WaveHeaderV2:
-    type_: int  # See types (e.g. NT_FP64) above. Zero for text waves.
+    """Version 2 wave header.
+
+    Args:
+
+        type_: See types (e.g. NT_FP64) above. Zero for text waves.
+        next:
+        bname:
+        wh_version: Write 0. Ignore on read.
+        src_fldr: Used in memory only. Write zero. Ignore on read.
+        file_name:
+        data_units:
+        x_units:
+        npnts: Number of data points in wave.
+        a_modified: Used in memory only. Write zero. Ignore on read.
+        hs_a:
+        hs_b: X value for point p = hsA*p + hsB
+        w_modified: Used in memory only. Write zero. Ignore on read.
+        sw_modified: Used in memory only. Write zero. Ignore on read.
+        fs_valid: True if full scale values have meaning.
+        top_full_scale:
+        bot_full_scale: The min full scale value for wave.
+        use_bits: Used in memory only. Write zero. Ignore on read. (char)
+        kind_bits: Reserved. Write zero. Ignore on read. (char)
+        formula:
+        dep_id: Used in memory only. Write zero. Ignore on read.
+        creation_date: DateTime of creation. Not used in version 1 files.
+        w_unused:
+        mod_date: DateTime of last modification.
+        wave_note_h:
+    """
+
+    type_: int
     next: int
     bname: str
-    wh_version: int  # Write 0. Ignore on read.
-    src_fldr: int  # Used in memory only. Write zero. Ignore on read.
+    wh_version: int
+    src_fldr: int
     file_name: int
     data_units: str
     x_units: str
-    npnts: int  # Number of data points in wave.
-    a_modified: int  # Used in memory only. Write zero. Ignore on read.
+    npnts: int
+    a_modified: int
     hs_a: float
-    hs_b: float  # X value for point p = hsA*p + hsB
-    w_modified: int  # Used in memory only. Write zero. Ignore on read.
-    sw_modified: int  # Used in memory only. Write zero. Ignore on read.
-    fs_valid: int  # True if full scale values have meaning.
+    hs_b: float
+    w_modified: int
+    sw_modified: int
+    fs_valid: int
     top_full_scale: float
-    bot_full_scale: float  # The min full scale value for wave.
-    use_bits: int  # Used in memory only. Write zero. Ignore on read. (char)
-    kind_bits: int  # Reserved. Write zero. Ignore on read. (char)
+    bot_full_scale: float
+    use_bits: int
+    kind_bits: int
     formula: int
-    dep_id: int  # Used in memory only. Write zero. Ignore on read.
-    creation_date: int  # DateTime of creation. Not used in version 1 files.
+    dep_id: int
+    creation_date: int
     w_unused: str
-    mod_date: int  # DateTime of last modification.
+    mod_date: int
     wave_note_h: int
 
     @classmethod
@@ -145,12 +222,7 @@ class WaveHeaderV2:
         bot_full_scale = cursor.read_f64_le()
 
         use_bits = cursor.read_u8_le()
-        # mut use_bits = [0_u8 1];
-        #    cursor.read_exact(&mut use_bits).unwrap()
-
         kind_bits = cursor.read_u8_le()
-        # mut kind_bits = [0_u8 1];
-        #    cursor.read_exact(&mut kind_bits).unwrap()
 
         formula = cursor.read_u32_le()
         dep_id = cursor.read_i32_le()
@@ -190,6 +262,8 @@ class WaveHeaderV2:
 
 @dataclass
 class WaveHeaderV5:
+    """Version 5 wave header."""
+
     next: int
     creation_date: int
     mod_date: int
@@ -223,8 +297,8 @@ class WaveHeaderV5:
     a_modified: int
     w_modified: int
     sw_modified: int
-    use_bits: int  # (char)
-    kind_bits: int  # (char)
+    use_bits: int  # char
+    kind_bits: int  # char
     formula: int
     dep_id: int
     whpad4: int
@@ -255,10 +329,6 @@ class WaveHeaderV5:
         dim_units = tuple(
             tuple(cursor.read_u8_le() for _ in range(4)) for _ in range(4)
         )
-        #     mut dim_units = [[0_u8; 4]; 4]
-        # for i in dim_units.iter_mut() {
-        #     cursor.read_exact(i).unwrap()
-        # }
 
         fs_valid = cursor.read_i16_le()
         whpad3 = cursor.read_i16_le()
@@ -272,21 +342,15 @@ class WaveHeaderV5:
         wave_note_h = cursor.read_u32_le()
 
         wh_unused = [cursor.read_i32_le() for _ in range(16)]
-        #     mut wh_unused = [0_i32; 16]
-        # for i in wh_unused.iter_mut() {
-        #     *i = cursor.read_i32_le()
-        # }
+
         a_modified = cursor.read_i16_le()
         w_modified = cursor.read_i16_le()
         sw_modified = cursor.read_i16_le()
 
         use_bits = cursor.read_u8_le()
-        #     mut use_bits = [0_u8; 1]
-        # cursor.read_exact(&mut use_bits).unwrap()
 
         kind_bits = cursor.read_u8_le()
-        #     mut kind_bits = [0_u8; 1]
-        # cursor.read_exact(&mut kind_bits).unwrap()
+
         formula = cursor.read_u32_le()
         dep_id = cursor.read_i32_le()
         whpad4 = cursor.read_i16_le()
@@ -294,8 +358,7 @@ class WaveHeaderV5:
         file_name = cursor.read_u32_le()
         s_indeces = cursor.read_i32_le()
 
-        return cls(
-            next,
+        return cls( next,
             creation_date,
             mod_date,
             npnts,
@@ -338,6 +401,7 @@ WaveHeader = WaveHeaderV2 | WaveHeaderV5
 
 
 class Ibw:
+    """Class representing an Igore binary wave file (ibw)."""
     # mod_date:
     bname: str
     creation_date: int
@@ -421,19 +485,19 @@ def read_binary_wave(cursor: Cursor) -> BinaryWave:
         case _:
             raise ValueError("Not a version 2 or version 5 bin header or wave header")
 
-    # TODO reshape data maybe
+    # TODO reshape data maybe?
     data = read_numeric_data(cursor, wave_header.type_, wave_header.npnts)
 
-    # version 1, 2 and 3 have 16 bytes of padding after numeric wave data
+    # Version 1, 2 and 3 have 16 bytes of padding after numeric wave data.
     if version in [1, 2, 3]:
         pos = cursor.position()
         cursor.set_position(pos + 16)
 
     # Optional Data
-    # v1: no optional data
-    # v2: wave note data
-    # v3: wave note data, wave dependency formula
-    # v5: wave dependency formula, wave note data, extended data units data, extended dimension units data, dimension label data, String indices used for text waves only
+    # v1: No optional data
+    # v2: Wave note data
+    # v3: Wave note data, wave dependency formula
+    # v5: Wave dependency formula, wave note data, extended data units data, extended dimension units data, dimension label data, String indices used for text waves only
 
     note = read_note(cursor, bin_header.note_size)
     extended_data_units = read_extended_data_units(cursor, bin_header)
@@ -470,7 +534,7 @@ def read_extended_data_units(cursor: Cursor, bin_header: BinHeader) -> str:
 
 
 def read_dim_e_units(cursor: Cursor, bin_header: BinHeader) -> list[str]:
-    # In C code this is a fixed length array of size 4. Here, it will be of variable length
+    # Original: Fixed length array of size 4.
     dim_e_units: list[str] = []
     if isinstance(bin_header, BinHeaderV5):
         for i in bin_header.dim_e_units_size:
@@ -481,7 +545,7 @@ def read_dim_e_units(cursor: Cursor, bin_header: BinHeader) -> list[str]:
 
 
 def read_dim_labels(cursor: Cursor, bin_header: BinHeader) -> list[str]:
-    # In C code this is a fixed length array of size 4. Here, it will be of variable length
+    # Original: Fixed length array of size 4.
     dim_labels: list[str] = []
     if isinstance(bin_header, BinHeaderV5):
         for i in bin_header.dim_e_units_size:
