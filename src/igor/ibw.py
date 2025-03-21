@@ -90,7 +90,7 @@ class BinHeaderV5:
         note_size: The size of the note text.
         data_e_units_size: The size of optional extended data units.
         dim_e_units_size: The size of optional extended dimension units.
-        dim_labels_size: nt, int, int, int]  # The size of optional dimension labels.
+        dim_labels_size: The size of optional dimension labels.
         s_indices_size: The size of string indicies if this is a text wave.
         options_size_1: Reserved. Write zero. Ignore on read.
         options_size_2: Reserved. Write zero. Ignore on read.
