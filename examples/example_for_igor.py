@@ -1,10 +1,14 @@
 from pathlib import Path
 
-from igor_to_kolxpd import convert_igor
+from xps_convert.igor_to_kolxpd import convert_igor
+
 
 def main():
-    # data_path = Path("/home/matthias/Documents/Beamtime_Data_All/raw/")
-    data_path = Path("/Users/matthias/Documents/raw/")
+    """
+    Convert all .pxt files that belong to a specific sample into
+    one .exp file each. 
+    """
+    data_path = Path("/path/to/data/")
 
     sample1: list[Path] = []
     sample1_1: list[Path] = []

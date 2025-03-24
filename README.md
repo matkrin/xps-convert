@@ -7,7 +7,7 @@ data to KolXPD after, e.g., a beamtime.
 
 ## Installation
 
-With [uv][https://docs.astral.sh/uv/]:
+With [uv](https://docs.astral.sh/uv/):
 
 ```bash
 uv tool install git+https://github.com/matkrin/xps-convert
