@@ -7,9 +7,10 @@ authors = [
 ]
 dependencies = [
     "numpy>=2.1.2",
+    "typer>=0.15.2",
 ]
 readme = "README.md"
-requires-python = ">= 3.8"
+requires-python = ">= 3.12"
 
 [build-system]
 requires = ["hatchling"]
@@ -17,12 +18,14 @@ build-backend = "hatchling.build"
 
 [tool.rye]
 managed = true
-dev-dependencies = [
-    "pytest>=8.3.3",
-]
 
 [tool.hatch.metadata]
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/xps_convert"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+]
