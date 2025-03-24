@@ -214,7 +214,7 @@ ItemCount={len(sub_idx)}
         
 
     print(f'Converting {source_file}')
-    with open(source_file, encoding='ansi') as readfile:
+    with open(source_file, encoding='latin-1') as readfile:
         data_lines = readfile.readlines()
 
     sub_idx = [i for i in range(len(data_lines))
