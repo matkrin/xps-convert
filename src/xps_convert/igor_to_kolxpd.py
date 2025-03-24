@@ -6,8 +6,7 @@ from numpy._typing import NDArray
 from igor.ibw import WaveHeaderV5
 from igor.packed import PackedFile
 
-
-def convert(sample_name: str, sample_files: list[Path]):
+def convert_igor(sample_name: str, sample_files: list[Path]):
     print(f"Converting {sample_name}")
     total_item_count = 0
     all_regions = ""
@@ -132,39 +131,3 @@ def create_data(data: NDArray[np.float64], start: float, end: float, step: float
     d += "\n"
     return d
 
-
-def main():
-    # data_path = Path("/home/matthias/Documents/Beamtime_Data_All/raw/")
-    data_path = Path("/Users/matthias/Documents/raw/")
-
-    sample1: list[Path] = []
-    sample1_1: list[Path] = []
-    sample2: list[Path] = []
-    sample2_1: list[Path] = []
-
-    for file in data_path.iterdir():
-        if file.is_file() and file.suffix == ".pxt":
-            if file.name.startswith("Sample1"):
-                if file.name.startswith("Sample1-1"):
-                    sample1_1.append(file)
-                else:
-                    sample1.append(file)
-            elif file.name.startswith("Sample2"):
-                if file.name.startswith("Sample2-1"):
-                    sample2_1.append(file)
-                else:
-                    sample2.append(file)
-
-    sample1.sort()
-    sample1_1.sort()
-    sample2.sort()
-    sample2_1.sort()
-
-    convert("Sample1", sample1)
-    convert("Sample1-1", sample1_1)
-    convert("Sample2", sample2)
-    convert("Sample2-1", sample2_1)
-
-
-if __name__ == "__main__":
-    main()
