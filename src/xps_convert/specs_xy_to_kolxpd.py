@@ -1,5 +1,7 @@
 from pathlib import Path
+from collections.abc import Iterable
 import numpy as np
+import copy
 
 class Specs_XY_Data_Block:
     def __init__(self, data_lines: list[str], header_parameters: dict):
@@ -13,7 +15,8 @@ class Specs_XY_Data_Block:
         self.cycle = ''
         # default values:
         self.header_parameters = {
-            'AxisBindingEn': 0
+            'AxisBindingEn': '0',
+            'ItemCount': '0',
             }
         for key in header_parameters:
             self.header_parameters[key] = header_parameters[key]
@@ -33,7 +36,8 @@ class Specs_XY_Data_Block:
     def write_as_region(self, 
                         print_cycle: bool=False,
                         print_scan: bool=False,
-                        parameters_as_notes: bool=False) -> str:
+                        parameters_as_notes: bool=False,
+                        no_region_end=False) -> str:
         name = self.header_parameters['Title']
         if print_cycle: 
             name += f' - cycle {self.cycle}'
@@ -50,7 +54,7 @@ Notes={notes}
 timeStart=0
 timeEnd=0
 Color=0
-ItemCount=0
+ItemCount={self.header_parameters['ItemCount']}
 Start={self.start:.2f}
 End={self.end:.2f}
 Dwell={self.header_parameters['Dwell']}
@@ -77,9 +81,55 @@ AreaMult=1
 #X Eq {self.start:.2f} {self.step:.2f}
 '''
         datastr = np.char.mod('%f', self.data[:,1])
-        out += "\n".join(datastr)
-        out += '\n[EndRegion]\n'
+        out += "\n".join(datastr) + '\n'
+        if no_region_end:
+            return out
+        out += '[EndRegion]\n'
         return out
+
+def get_data_avg(data_blocks,
+                 header_parameters: dict={}) -> Specs_XY_Data_Block:
+    '''
+    Takes a collection of Specs_XY_Data_Block objects and returns one with
+    averaged data.
+
+    Parameters
+    ----------
+    data_blocks : iterable of Specs_XY_Data_Block
+        The data blocks to collect.
+    header : dict of {str: str}
+        Header parameters for the Specs_XY_Data_Block. If nothing is passed,
+        will use the parameters of data_blocks[0].
+
+    Returns
+    -------
+    Specs_XY_Data_Block
+        A new data block with averaged data.
+
+    '''
+    if isinstance(data_blocks, Iterable):
+        if not all(isinstance(block, Specs_XY_Data_Block)
+                   for block in data_blocks):
+            raise TypeError('data_blocks: Expected Iterable of type '
+                            'Specs_XY_Data_Block, found '
+                            f'{[str(type(block)) for block in data_blocks]}')
+    else:
+        raise TypeError('data_blocks: expected Iterable.')
+    if not all([np.shape(block.data) == np.shape(data_blocks[0].data)]
+               for block in data_blocks):
+        raise ValueError('Data blocks must contain the same number of '
+                         'data points.')
+    if not all(np.allclose(block.data[:,0], data_blocks[0].data[:,0])
+               for block in data_blocks):
+        raise ValueError('Data block energy ranges are not equal.')
+
+    avg_block = copy.deepcopy(data_blocks[0])
+    if header_parameters:
+        avg_block.header_parameters = copy.copy(header_parameters)
+    avg_block.data[:, 1] = (sum([block.data[:, 1] for block in data_blocks])
+                            / len(data_blocks))
+    return avg_block
+
 
 def convert_specs_prodigy_xy(source_file: Path) -> str:
     '''
@@ -172,7 +222,9 @@ def convert_specs_prodigy_xy(source_file: Path) -> str:
         print_cycle = True if len(data_per_cycle) > 1 else False
         print_scan = (True if any(len(v) > 1 for v in data_per_cycle.values())
                        else False)
-        out = f'''[Folder]
+        out = ''
+        if print_cycle:
+            out += f'''[Folder]
 KolXPDversion=1.8.0.69
 Title={header_parameters['Title']}
 NotesHTML=0
@@ -183,11 +235,23 @@ Color=0
 ItemCount={total_data}
 '''
         for cycle_nr in data_per_cycle:
+            if len(data_per_cycle[cycle_nr]) > 1:
+                # also write an overall region with averaged data
+                avg_block = get_data_avg(data_per_cycle[cycle_nr])
+                avg_block.sweeps = f'{len(data_per_cycle[cycle_nr])}'
+                avg_block.header_parameters['ItemCount'] = f'{avg_block.sweeps}'
+                out += avg_block.write_as_region(print_cycle=print_cycle,
+                                                 print_scan=False,
+                                                 parameters_as_notes=True,
+                                                 no_region_end=True)
             for data_block in data_per_cycle[cycle_nr]:
                 out += data_block.write_as_region(print_cycle=print_cycle,
                                                   print_scan=print_scan,
                                                   parameters_as_notes=True)
-        out += '[EndFolder]\n'
+            if len(data_per_cycle[cycle_nr]) > 1:
+                out += '[EndRegion]\n'
+        if print_cycle:
+            out += '[EndFolder]\n'
         return out
 
     def process_group(data_lines: list[str]) -> str:
