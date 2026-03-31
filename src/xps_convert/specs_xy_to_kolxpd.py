@@ -54,7 +54,7 @@ Notes={notes}
 timeStart=0
 timeEnd=0
 Color=0
-ItemCount={self.header_parameters['ItemCount']}
+ItemCount={self.header_parameters.get('ItemCount', 0)}
 Start={self.start:.2f}
 End={self.end:.2f}
 Dwell={self.header_parameters['Dwell']}
@@ -66,10 +66,10 @@ Sweeps={self.sweeps}
 NumOfPointSets=5
 AxisBindingEn={self.header_parameters['AxisBindingEn']}
 Smart=0
-WF={self.header_parameters['WF']}
+WF={self.header_parameters.get('WF', '')}
 AxisConvUsesWF=0
-Udet={self.header_parameters['Udet']}
-LensMode={self.header_parameters['LensMode']}
+Udet={self.header_parameters.get('Udet', '')}
+LensMode={self.header_parameters.get('LensMode', '')}
 UseMonochromator=0
 Level=
 Cross=1
@@ -152,7 +152,8 @@ def convert_specs_prodigy_xy(source_file: Path) -> str:
         # everything up until the first Cycle is general header:
         specs_to_kolxpd_header = {
             '# Region:': 'Title',
-            '# Analyzer Lens:': 'LensMode',
+            '# Analyzer Lens:': 'LensMode',       # old format (≤4.120)
+            '# Analyzer Lens Mode:': 'LensMode',  # new format (≥4.134)
             '# Excitation Energy:': 'ExcitEn',
             '# Pass Energy:': 'PassEn',
             '# Detector Voltage:': 'Udet',
